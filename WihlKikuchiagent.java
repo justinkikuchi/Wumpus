@@ -63,12 +63,12 @@ public class WihlKikuchiagent extends WumpusAgent {
 		possible.add(map[x][y+1]);
 		possible.add(map[x][y-1]);
 		possible.add(map[x-1][y]);
-		possible.add(map[x+1][y].pitPos);
+		possible.add(map[x+1][y]);
 		
                 Arrays.sort(possible, new pitPosComp());
-                lowRisk = possible.get(possible.size());
+                lowRisk = possible.get(possible.size()).pitPos;
                 for(int i=0;i<possible.size();i++){
-	           if(possible.get(i).pitPos > 0 && possible.get(0).pitPos < risk){
+	           if(possible.get(i).pitPos > 0 && possible.get(i).pitPos < risk){
 		      if(possible.get(i).pitPos <= lowRisk){
                          lowRisk = possible.get(i).pitPos;
                       }
@@ -82,17 +82,12 @@ public class WihlKikuchiagent extends WumpusAgent {
 		} 
 
                 Arrays.sort(possible, new visitComp());
-                lowVisit = possible.get(possible.size());
+                lowVisit = possible.get(possible.size()).visited;
                 for(int i=0;i<possible.size();i++){
-	           if(possible.get(i).visited > 0 && possible.get(0).pitPos < risk){
-		      if(possible.get(i).pitPos <= lowRisk){
-                         lowRisk = possible.get(i).pitPos;
-                      }
-                      else{
-                         possible.remove(i);
-                      }
-		   }
-                   else if(possible.get(i).pitPos > 0){
+	           if(possible.get(i).visited <= lowVisit){
+		      lowVisit = possible.get(i);
+                   }
+                   else{
                       possible.remove(i);
                    }
 		}
@@ -296,6 +291,7 @@ class pitPosComp implements Comparator{
 		}
 	}
 }
+
 class visitComp implements Comparator{
 	public int compare(Object n1, Object n2){
 		int n1Visit = ((SmartNode)n1).visited;
@@ -312,6 +308,22 @@ class visitComp implements Comparator{
 	}
 }
 
+class visitComp implements Comparator{
+	public int compare(Object n1, Object n2){
+		int n1Dist = ((SmartNode)n1).distToGoal;
+		int n2Dist = ((SmartNode)n2).distToGoal;
+		if(n1Dist > n2Dist){
+			return 1;
+		}
+		else if(n1Dist < n2Dist){
+			return -1;
+		}
+		else{
+			return 0;
+		}
+	}
+}
+
 class SmartNode {
 	public int pitPos;
 	public int visited;
@@ -320,14 +332,16 @@ class SmartNode {
 	public int preY;
         public int x;
         public int y;
+        public int distToGoal;
 	public ArrayList<SmartNode> dependencies;
 
-	public SmartNode(int preX, int preY, int x, int y, int pitPos, int visited,
+	public SmartNode(int preX, int preY, int x, int y, int distToGoal, int pitPos, int visited,
 			boolean isWall) {
 		this.preX = preX;
 		this.preY = preY;
                 this.x = x;
                 this.y = y;
+                this.distToGoal = distToGoal;
 		this.pitPos = pitPos;
 		this.visited = visited;
 		this.isWall = isWall;
