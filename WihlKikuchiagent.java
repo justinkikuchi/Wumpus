@@ -1,8 +1,8 @@
 package Agents;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.TreeMap;
+import java.util.Collection;
+import java.util.Collections;
 
 import BotEnvironment.SearchBot.*;
 
@@ -25,11 +25,11 @@ public class WihlKikuchiagent extends WumpusAgent {
 			node = getCurrentNode();
 			x = node.getX();
 			y = node.getY();
-			map[x][y] = new SmartNode(-1, -1, 0, 1, false);
+			map[x][y] = new SmartNode(-1, -1, x, y, 0, 1, false);
 		} else {
 			if (map[x][y] == null) { // on a node that hasnt been created, maybe
 										// never reach this?
-				map[x][y] = new SmartNode(x, y, 0, 0, false);
+				map[x][y] = new SmartNode(x, y, x, y, 0, 0, false);
 				System.out.println("weird situiation");
 			}
 			// call functions to check surrounding areas
@@ -56,20 +56,53 @@ public class WihlKikuchiagent extends WumpusAgent {
 	}
 	
 	public int move(){
-		ArrayList<Integer> possible = new ArrayList<Integer>();
+                int lowRisk = 0;
+                int lowVisted = 0;
 
-		TreeMap<Integer, SmartNode> pit = new TreeMap<Integer, SmartNode>();
-		pit.put(new Integer(map[x][y+1].pitPos), map[x][y+1]);
-		pit.put(new Integer(map[x][y-1].pitPos), map[x][y-1]);
-		pit.put(new Integer(map[x+1][y].pitPos), map[x+1][y]);
-		pit.put(new Integer(map[x-1][y].pitPos), map[x-1][y]);
+		ArrayList<SmartNode> possible = new ArrayList<SmartNode>();
+		possible.add(map[x][y+1]);
+		possible.add(map[x][y-1]);
+		possible.add(map[x-1][y]);
+		possible.add(map[x+1][y].pitPos);
 		
-		TreeMap<Integer, SmartNode> visit = new TreeMap<Integer, SmartNode>();
-		visit.put(new Integer(map[x][y+1].visited), map[x][y+1]);
-		visit.put(new Integer(map[x][y-1].visited), map[x][y-1]);
-		visit.put(new Integer(map[x+1][y].visited), map[x+1][y]);
-		visit.put(new Integer(map[x-1][y].visited), map[x-1][y]);
+                Arrays.sort(possible, new pitPosComp());
+                lowRisk = possible.get(possible.size());
+                for(int i=0;i<possible.size();i++){
+	           if(possible.get(i).pitPos > 0 && possible.get(0).pitPos < risk){
+		      if(possible.get(i).pitPos <= lowRisk){
+                         lowRisk = possible.get(i).pitPos;
+                      }
+                      else{
+                         possible.remove(i);
+                      }
+		   }
+                   else if(possible.get(i).pitPos > 0){
+                      possible.remove(i);
+                   }
+		} 
+
+                Arrays.sort(possible, new visitComp());
+                lowVisit = possible.get(possible.size());
+                for(int i=0;i<possible.size();i++){
+	           if(possible.get(i).visited > 0 && possible.get(0).pitPos < risk){
+		      if(possible.get(i).pitPos <= lowRisk){
+                         lowRisk = possible.get(i).pitPos;
+                      }
+                      else{
+                         possible.remove(i);
+                      }
+		   }
+                   else if(possible.get(i).pitPos > 0){
+                      possible.remove(i);
+                   }
+		}
+
+		pit.add(new Integer(map[x][y+1].visited));
+		pit.add(new Integer(map[x][y-1].visited));
+		pit.add(new Integer(map[x+1][y].visited));
+		pit.add(new Integer(map[x-1][y].visited));
 		
+		Collections.sort(pit);
 		return 0;
 	}
 	public void reset() {
@@ -82,16 +115,16 @@ public class WihlKikuchiagent extends WumpusAgent {
 		boolean east = false;
 		boolean west = false;
 		if (map[x - 1][y] == null) {
-			map[x - 1][y] = new SmartNode(x, y, 0, 0, false);
+			map[x - 1][y] = new SmartNode(x, y, x - 1, y, 0, 0, false);
 		}
 		if (map[x + 1][y] == null) {
-			map[x + 1][y] = new SmartNode(x, y, 0, 0, false);
+			map[x + 1][y] = new SmartNode(x, y, x + 1, y, 0, 0, false);
 		}
 		if (map[x][y - 1] == null) {
-			map[x][y - 1] = new SmartNode(x, y, 0, 0, false);
+			map[x][y - 1] = new SmartNode(x, y, x, y -1, 0, 0, false);
 		}
 		if (map[x][y + 1] == null) {
-			map[x][y + 1] = new SmartNode(x, y, 0, 0, false);
+			map[x][y + 1] = new SmartNode(x, y, x, y +1, 0, 0, false);
 		}
 		if (map[x + 1][y].visited > 0) {
 			east = true;
@@ -168,7 +201,7 @@ public class WihlKikuchiagent extends WumpusAgent {
 		if (status == SAFE || status == HURT) {
 			x++;
 			if (map[x][y] == null) {
-				map[x][y] = new SmartNode(x - 1, y, -1, 1, false);
+				map[x][y] = new SmartNode(x - 1, y, x, y, -1, 1, false);
 			} else {
 				SmartNode node = map[x][y];
 				node.pitPos = -1;
@@ -178,7 +211,7 @@ public class WihlKikuchiagent extends WumpusAgent {
 			}
 		} else if (status == HIT_WALL) {
 			if (map[x + 1][y] == null) {
-				map[x + 1][y] = new SmartNode(x, y, -1, 1, true);
+				map[x + 1][y] = new SmartNode(x, y, x+1, y, -1, 1, true);
 			}
 		}
 		return status;
@@ -189,7 +222,7 @@ public class WihlKikuchiagent extends WumpusAgent {
 		if (status == SAFE || status == HURT) {
 			x--;
 			if (map[x][y] == null) {
-				map[x][y] = new SmartNode(x + 1, y, -1, 1, true);
+				map[x][y] = new SmartNode(x + 1, y, x, y, -1, 1, true);
 			} else {
 				SmartNode node = map[x][y];
 				node.pitPos = -1;
@@ -199,7 +232,7 @@ public class WihlKikuchiagent extends WumpusAgent {
 			}
 		} else if (status == HIT_WALL) {
 			if (map[x - 1][y] == null) {
-				map[x - 1][y] = new SmartNode(x, y, -1, 1, true);
+				map[x - 1][y] = new SmartNode(x, y, x-1, y, -1, 1, true);
 			}
 		}
 		return status;
@@ -210,7 +243,7 @@ public class WihlKikuchiagent extends WumpusAgent {
 		if (status == SAFE || status == HURT) {
 			y++;
 			if (map[x][y] == null) {
-				map[x][y] = new SmartNode(x, y - 1, -1, 1, true);
+				map[x][y] = new SmartNode(x, y - 1, x, y, -1, 1, true);
 			} else {
 				SmartNode node = map[x][y];
 				node.pitPos = -1;
@@ -220,7 +253,7 @@ public class WihlKikuchiagent extends WumpusAgent {
 			}
 		} else if (status == HIT_WALL) {
 			if (map[x][y + 1] == null) {
-				map[x][y + 1] = new SmartNode(x, y, -1, 1, true);
+				map[x][y + 1] = new SmartNode(x, y, x, y + 1, -1, 1, true);
 			}
 		}
 		return status;
@@ -231,7 +264,7 @@ public class WihlKikuchiagent extends WumpusAgent {
 		if (status == SAFE || status == HURT) {
 			y--;
 			if (map[x][y] == null) {
-				map[x][y] = new SmartNode(x, y + 1, -1, 1, true);
+				map[x][y] = new SmartNode(x, y + 1, x, y, -1, 1, true);
 			} else {
 				SmartNode node = map[x][y];
 				node.pitPos = -1;
@@ -241,12 +274,13 @@ public class WihlKikuchiagent extends WumpusAgent {
 			}
 		} else if (status == HIT_WALL) {
 			if (map[x][y - 1] == null) {
-				map[x][y - 1] = new SmartNode(x, y, -1, 1, true);
+				map[x][y - 1] = new SmartNode(x, y, x, y -1, -1, 1, true);
 			}
 		}
 		return status;
 	}
 }
+
 class pitPosComp implements Comparator{
 	public int compare(Object n1, Object n2){
 		int n1Pos = ((SmartNode)n1).pitPos;
@@ -277,18 +311,23 @@ class visitComp implements Comparator{
 		}
 	}
 }
+
 class SmartNode {
 	public int pitPos;
 	public int visited;
 	public boolean isWall;
 	public int preX;
 	public int preY;
+        public int x;
+        public int y;
 	public ArrayList<SmartNode> dependencies;
 
-	public SmartNode(int preX, int preY, int pitPos, int visited,
+	public SmartNode(int preX, int preY, int x, int y, int pitPos, int visited,
 			boolean isWall) {
 		this.preX = preX;
 		this.preY = preY;
+                this.x = x;
+                this.y = y;
 		this.pitPos = pitPos;
 		this.visited = visited;
 		this.isWall = isWall;
