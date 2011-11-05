@@ -55,6 +55,8 @@ public class WihlKikuchiagent extends WumpusAgent {
 	public int move() {
 		int lowRisk = 0;
 		int lowVisted = 0;
+		boolean allVisitedSame = true;
+		int dirOfGoal;
 
 		ArrayList<SmartNode> possible = new ArrayList<SmartNode>();
 		possible.add(map[x][y + 1]);
@@ -82,9 +84,50 @@ public class WihlKikuchiagent extends WumpusAgent {
 			if (possible.get(i).visited <= lowVisit) {
 				lowVisit = possible.get(i).visited;
 			} else {
+				allVisitedSame = false;
 				possible.remove(i);
 			}
 		}
+		
+		dirOfGoal = getDirectionOfGoal();
+		if(allVisitedSame){
+			risk++;
+		}
+		
+		if(dirOfGoal == EAST){
+			if(possible.contains(map[x+1][y])){
+				return stepEast();
+			}
+		}
+		if(dirOfGoal == WEST){
+			if(possible.contains(map[x+1][y])){
+				return stepWest();
+			}
+		}
+		if(dirOfGoal == NORTH){
+			if(possible.contains(map[x+1][y])){
+				return stepNorth();
+			}
+		}
+		if(dirOfGoal == SOUTH){
+			if(possible.contains(map[x+1][y])){
+				return stepSouth();
+			}
+		}
+		
+		if(possible.get(0).x == x-1){
+			return stepWest();
+		}
+		if(possible.get(0).x == x+1){
+			return stepEastt();
+		}
+		if(possible.get(0).y == y-1){
+			return stepSouth();
+		}
+		if(possible.get(0).y == y+1){
+			return stepNorth();
+		}
+		
 
 		return 0;
 	}
@@ -323,8 +366,7 @@ class SmartNode {
 		this.preX = preX;
 		this.preY = preY;
 		this.x = x;
-		this.y = y;
-		//this.distToGoal = distToGoal;
+		this.y = y;;
 		this.pitPos = pitPos;
 		this.visited = visited;
 		this.isWall = isWall;
