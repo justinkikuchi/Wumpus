@@ -1,8 +1,10 @@
 package Agents;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 
 import BotEnvironment.SearchBot.*;
 
@@ -36,70 +38,57 @@ public class WihlKikuchiagent extends WumpusAgent {
 			// create new nodes or update exisiting ones with new information
 			boolean pitStatus = nearPit();
 			if (pitStatus && map[x][y].visited == 0) {
-				updateNeighbors(x,y);
-			}
-			else if(!pitStatus && map[x][y].visited == 0){
+				updateNeighbors(x, y);
+			} else if (!pitStatus && map[x][y].visited == 0) {
 				map[x][y].notPit();
-				//move to a safe one
+				// move to a safe one
+			} else if (!pitStatus && map[x][y].visited > 0) {
+				// no pit, already been here
+			} else if (pitStatus && map[x][y].visited > 0) {
+				// pit, already been here
 			}
-			else if(!pitStatus && map[x][y].visited > 0){
-				//no pit, already been here
-			}
-			else if(pitStatus && map[x][y].visited > 0){
-				//pit, already been here
-			}
-			
-			
-			
+
 		}
-		//moveForward();
+		// moveForward();
 	}
-	
-	public int move(){
-                int lowRisk = 0;
-                int lowVisted = 0;
+
+	public int move() {
+		int lowRisk = 0;
+		int lowVisted = 0;
 
 		ArrayList<SmartNode> possible = new ArrayList<SmartNode>();
-		possible.add(map[x][y+1]);
-		possible.add(map[x][y-1]);
-		possible.add(map[x-1][y]);
-		possible.add(map[x+1][y]);
-		
-                Arrays.sort(possible, new pitPosComp());
-                lowRisk = possible.get(possible.size()).pitPos;
-                for(int i=0;i<possible.size();i++){
-	           if(possible.get(i).pitPos > 0 && possible.get(i).pitPos < risk){
-		      if(possible.get(i).pitPos <= lowRisk){
-                         lowRisk = possible.get(i).pitPos;
-                      }
-                      else{
-                         possible.remove(i);
-                      }
-		   }
-                   else if(possible.get(i).pitPos > 0){
-                      possible.remove(i);
-                   }
-		} 
+		possible.add(map[x][y + 1]);
+		possible.add(map[x][y - 1]);
+		possible.add(map[x - 1][y]);
+		possible.add(map[x + 1][y]);
 
-                Arrays.sort(possible, new visitComp());
-                lowVisit = possible.get(possible.size()).visited;
-                for(int i=0;i<possible.size();i++){
-	           if(possible.get(i).visited <= lowVisit){
-		      lowVisit = possible.get(i);
-                   }
-                   else{
-                      possible.remove(i);
-                   }
+		Collections.sort(possible, new pitPosComp());
+		lowRisk = possible.get(possible.size()).pitPos;
+		for (int i = 0; i < possible.size(); i++) {
+			if (possible.get(i).pitPos > 0 && possible.get(i).pitPos < risk) {
+				if (possible.get(i).pitPos <= lowRisk) {
+					lowRisk = possible.get(i).pitPos;
+				} else {
+					possible.remove(i);
+				}
+			} else if (possible.get(i).pitPos > 0) {
+				possible.remove(i);
+			}
 		}
 
-		pit.add(new Integer(map[x][y+1].visited));
-		pit.add(new Integer(map[x][y-1].visited));
-		pit.add(new Integer(map[x+1][y].visited));
-		pit.add(new Integer(map[x-1][y].visited));
-		
-		Collections.sort(pit);
+		Collections.sort(possible, new visitComp());
+		int lowVisit = possible.get(possible.size()).visited;
+		for (int i = 0; i < possible.size(); i++) {
+			if (possible.get(i).visited <= lowVisit) {
+				lowVisit = possible.get(i).visited;
+			} else {
+				possible.remove(i);
+			}
+		}
+
 		return 0;
 	}
+
 	public void reset() {
 		super.reset();
 	}
@@ -116,10 +105,10 @@ public class WihlKikuchiagent extends WumpusAgent {
 			map[x + 1][y] = new SmartNode(x, y, x + 1, y, 0, 0, false);
 		}
 		if (map[x][y - 1] == null) {
-			map[x][y - 1] = new SmartNode(x, y, x, y -1, 0, 0, false);
+			map[x][y - 1] = new SmartNode(x, y, x, y - 1, 0, 0, false);
 		}
 		if (map[x][y + 1] == null) {
-			map[x][y + 1] = new SmartNode(x, y, x, y +1, 0, 0, false);
+			map[x][y + 1] = new SmartNode(x, y, x, y + 1, 0, 0, false);
 		}
 		if (map[x + 1][y].visited > 0) {
 			east = true;
@@ -206,7 +195,7 @@ public class WihlKikuchiagent extends WumpusAgent {
 			}
 		} else if (status == HIT_WALL) {
 			if (map[x + 1][y] == null) {
-				map[x + 1][y] = new SmartNode(x, y, x+1, y, -1, 1, true);
+				map[x + 1][y] = new SmartNode(x, y, x + 1, y, -1, 1, true);
 			}
 		}
 		return status;
@@ -227,7 +216,7 @@ public class WihlKikuchiagent extends WumpusAgent {
 			}
 		} else if (status == HIT_WALL) {
 			if (map[x - 1][y] == null) {
-				map[x - 1][y] = new SmartNode(x, y, x-1, y, -1, 1, true);
+				map[x - 1][y] = new SmartNode(x, y, x - 1, y, -1, 1, true);
 			}
 		}
 		return status;
@@ -269,56 +258,50 @@ public class WihlKikuchiagent extends WumpusAgent {
 			}
 		} else if (status == HIT_WALL) {
 			if (map[x][y - 1] == null) {
-				map[x][y - 1] = new SmartNode(x, y, x, y -1, -1, 1, true);
+				map[x][y - 1] = new SmartNode(x, y, x, y - 1, -1, 1, true);
 			}
 		}
 		return status;
 	}
 }
 
-class pitPosComp implements Comparator{
-	public int compare(Object n1, Object n2){
-		int n1Pos = ((SmartNode)n1).pitPos;
-		int n2Pos = ((SmartNode)n2).pitPos;
-		if(n1Pos > n2Pos){
+class pitPosComp implements Comparator {
+	public int compare(Object n1, Object n2) {
+		int n1Pos = ((SmartNode) n1).pitPos;
+		int n2Pos = ((SmartNode) n2).pitPos;
+		if (n1Pos > n2Pos) {
 			return 1;
-		}
-		else if(n1Pos < n2Pos){
+		} else if (n1Pos < n2Pos) {
 			return -1;
-		}
-		else{
+		} else {
 			return 0;
 		}
 	}
 }
 
-class visitComp implements Comparator{
-	public int compare(Object n1, Object n2){
-		int n1Visit = ((SmartNode)n1).visited;
-		int n2Visit = ((SmartNode)n2).visited;
-		if(n1Visit > n2Visit){
+class visitComp implements Comparator {
+	public int compare(Object n1, Object n2) {
+		int n1Visit = ((SmartNode) n1).visited;
+		int n2Visit = ((SmartNode) n2).visited;
+		if (n1Visit > n2Visit) {
 			return 1;
-		}
-		else if(n1Visit < n2Visit){
+		} else if (n1Visit < n2Visit) {
 			return -1;
-		}
-		else{
+		} else {
 			return 0;
 		}
 	}
 }
 
-class visitComp implements Comparator{
-	public int compare(Object n1, Object n2){
-		int n1Dist = ((SmartNode)n1).distToGoal;
-		int n2Dist = ((SmartNode)n2).distToGoal;
-		if(n1Dist > n2Dist){
+class distComp implements Comparator {
+	public int compare(Object n1, Object n2) {
+		int n1Dist = ((SmartNode) n1).distToGoal;
+		int n2Dist = ((SmartNode) n2).distToGoal;
+		if (n1Dist > n2Dist) {
 			return 1;
-		}
-		else if(n1Dist < n2Dist){
+		} else if (n1Dist < n2Dist) {
 			return -1;
-		}
-		else{
+		} else {
 			return 0;
 		}
 	}
@@ -330,18 +313,18 @@ class SmartNode {
 	public boolean isWall;
 	public int preX;
 	public int preY;
-        public int x;
-        public int y;
-        public int distToGoal;
+	public int x;
+	public int y;
+	public int distToGoal;
 	public ArrayList<SmartNode> dependencies;
 
-	public SmartNode(int preX, int preY, int x, int y, int distToGoal, int pitPos, int visited,
-			boolean isWall) {
+	public SmartNode(int preX, int preY, int x, int y,
+			int pitPos, int visited, boolean isWall) {
 		this.preX = preX;
 		this.preY = preY;
-                this.x = x;
-                this.y = y;
-                this.distToGoal = distToGoal;
+		this.x = x;
+		this.y = y;
+		//this.distToGoal = distToGoal;
 		this.pitPos = pitPos;
 		this.visited = visited;
 		this.isWall = isWall;
