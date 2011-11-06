@@ -9,7 +9,6 @@ import java.util.Comparator;
 import BotEnvironment.SearchBot.*;
 
 public class WihlKikuchiagent extends WumpusAgent {
-	private Node node;
 	private SmartNode[][] map = new SmartNode[100][100];
 	private int steps = 0;
 	private int x;
@@ -24,7 +23,7 @@ public class WihlKikuchiagent extends WumpusAgent {
 	public void step() {
 		// start condition
 		if (steps == 0) {
-			node = getCurrentNode();
+			Node node = getCurrentNode();
 			x = node.getX();
 			y = node.getY();
 			map[x][y] = new SmartNode(-1, -1, x, y, 0, 1, false);
@@ -38,8 +37,6 @@ public class WihlKikuchiagent extends WumpusAgent {
 			log("pit and not visited");
 			updateNeighbors(x, y);
 		} else if (!pitStatus) {
-			// map[x][y].notPit();
-			// move to a safe one
 			if (map[x - 1][y] == null) {
 				map[x - 1][y] = new SmartNode(x, y, x - 1, y, -1, 0, false);
 			} else {
@@ -61,16 +58,32 @@ public class WihlKikuchiagent extends WumpusAgent {
 				map[x][y + 1].notPit();
 			}
 		}
-		// } else if (!pitStatus && map[x][y].visited > 0) {
-		// no pit, already been here
-		// }
 		else if (pitStatus && map[x][y].visited > 0) {
 			// pit, already been here
 		}
+        boolean nearWumpus = nearWumpus();
+        boolean nearMinion = nearMinion();
+        if(nearWumpus || nearMinion){
+            fireArrow();
+        }
 		steps++;
 		move();
 	}
     
+    public void fireArrow(){
+        if (map[x - 1][y].visited < 1 || map[x - 1][y].isWall) {
+			fireArrow(WEST);
+		}
+		if (map[x + 1][y].visited < 1 || map[x + 1][y].isWall) {
+			fireArrow(EAST);
+		}
+		if (map[x][y - 1].visited < 1 || map[x][y - 1].isWall) {
+			fireArrow(NORTH);
+		}
+		if (map[x][y + 1].visited < 1 || map[x][y + 1].isWall) {
+			fireArrow(SOUTH);
+		}
+    }
 	public int move() {
 		int lowRisk = 0;
 		int lowVisted = 0;
@@ -195,6 +208,9 @@ public class WihlKikuchiagent extends WumpusAgent {
     
 	public void reset() {
 		super.reset();
+        map = new SmartNode[100][100];
+        steps = 0;
+        risk = -1;
 	}
     
 	private void updateNeighbors(int x, int y) {
@@ -457,9 +473,7 @@ class SmartNode {
 	}
     
 	public void clearDependency(SmartNode smartNode) {
-		if (!dependencies.remove(smartNode))
-			System.out.println("didnt find it");
-		else
+		if (dependencies.remove(smartNode))
 			pitPos++;
 	}
     
